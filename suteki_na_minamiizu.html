@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>素敵な南伊豆 〜Summer Wonder Land〜</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Caveat:wght@600&family=Zen+Maru+Gothic:wght@400;700&display=swap');
+
+  :root {
+    --sea: #1a6fa8;
+    --sky: #5bb8f5;
+    --sand: #f5e6c8;
+    --wave: #e8f6ff;
+    --sun: #f7b731;
+    --coral: #e05c5c;
+    --green: #2d9e6b;
+    --text: #1a2a3a;
+    --chord-bg: #fff8e8;
+    --chord-border: #f7b731;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    background: linear-gradient(160deg, #d0eeff 0%, #e8f6ff 40%, #f5e6c8 100%);
+    min-height: 100vh;
+    color: var(--text);
+    padding: 2rem 1rem 4rem;
+  }
+
+  /* 波模様の背景 */
+  body::before {
+    content: '';
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 120px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120'%3E%3Cpath d='M0,60 C150,100 350,0 600,60 C850,120 1050,20 1200,60 L1200,120 L0,120 Z' fill='%231a6fa8' opacity='0.15'/%3E%3Cpath d='M0,80 C200,40 400,120 600,80 C800,40 1000,100 1200,80 L1200,120 L0,120 Z' fill='%235bb8f5' opacity='0.2'/%3E%3C/svg%3E") repeat-x bottom;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* タイトル */
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding: 2rem;
+    background: rgba(255,255,255,0.7);
+    border-radius: 20px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 24px rgba(26,111,168,0.12);
+    border: 2px solid rgba(255,255,255,0.9);
+  }
+
+  header h1 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 2rem;
+    color: var(--sea);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.3rem;
+  }
+
+  header .subtitle {
+    font-family: 'Caveat', cursive;
+    font-size: 1.3rem;
+    color: var(--coral);
+    letter-spacing: 0.05em;
+  }
+
+  /* コードリファレンス */
+  .chord-reference {
+    background: rgba(255,255,255,0.8);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 16px rgba(26,111,168,0.1);
+    border: 1.5px solid rgba(91,184,245,0.4);
+  }
+
+  .chord-reference h2 {
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    color: var(--sea);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    border-bottom: 2px dashed var(--sky);
+    padding-bottom: 0.5rem;
+  }
+
+  .chord-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.8rem;
+  }
+
+  .chord-card {
+    background: var(--chord-bg);
+    border: 1.5px solid var(--chord-border);
+    border-radius: 10px;
+    padding: 0.7rem 0.5rem;
+    text-align: center;
+  }
+
+  .chord-card .chord-name {
+    font-family: 'Caveat', cursive;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--sea);
+    margin-bottom: 0.4rem;
+  }
+
+  .chord-card pre {
+    font-family: 'Courier New', monospace;
+    font-size: 0.72rem;
+    line-height: 1.5;
+    color: var(--text);
+    background: white;
+    padding: 0.4rem;
+    border-radius: 6px;
+    text-align: left;
+    display: inline-block;
+  }
+
+  /* 楽譜本体 */
+  .score {
+    background: rgba(255,255,255,0.8);
+    border-radius: 16px;
+    padding: 1.8rem;
+    box-shadow: 0 2px 16px rgba(26,111,168,0.1);
+    border: 1.5px solid rgba(91,184,245,0.4);
+  }
+
+  .score h2 {
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    color: var(--sea);
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+    border-bottom: 2px dashed var(--sky);
+    padding-bottom: 0.5rem;
+  }
+
+  .section {
+    margin-bottom: 1.8rem;
+  }
+
+  .section-label {
+    display: inline-block;
+    background: var(--sea);
+    color: white;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    padding: 0.15rem 0.6rem;
+    border-radius: 20px;
+    margin-bottom: 0.8rem;
+  }
+
+  .line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.2rem;
+    margin-bottom: 0.5rem;
+    align-items: baseline;
+  }
+
+  .lyric-block {
+    position: relative;
+    padding-top: 1.4rem;
+  }
+
+  .chord-above {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-family: 'Caveat', cursive;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--coral);
+    white-space: nowrap;
+    line-height: 1;
+  }
+
+  .lyric-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  /* イントロ */
+  .intro-line {
+    font-family: 'Caveat', cursive;
+    font-size: 1.1rem;
+    color: var(--sea);
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    background: var(--wave);
+    border-left: 3px solid var(--sky);
+    border-radius: 0 8px 8px 0;
+  }
+
+  /* 装飾 */
+  .divider {
+    border: none;
+    border-top: 1.5px dashed rgba(91,184,245,0.5);
+    margin: 1.5rem 0;
+  }
+
+  .sun-deco {
+    text-align: center;
+    font-size: 1.5rem;
+    margin: 0.5rem 0;
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>『素敵な南伊豆』</h1>
+    <div class="subtitle">〜Summer Wonder Land〜</div>
+  </header>
+
+  <!-- コードリファレンス -->
+  <div class="chord-reference">
+    <h2>🎸 Ukulele Chord Tab</h2>
+    <div class="chord-grid">
+
+      <div class="chord-card">
+        <div class="chord-name">G</div>
+        <pre>A|--2--|
+E|--3--|
+C|--2--|
+G|--0--|</pre>
+      </div>
+
+      <div class="chord-card">
+        <div class="chord-name">D</div>
+        <pre>A|--2--|
+E|--2--|
+C|--2--|
+G|--0--|</pre>
+      </div>
+
+      <div class="chord-card">
+        <div class="chord-name">D7</div>
+        <pre>A|--2--|
+E|--2--|
+C|--2--|
+G|--2--|</pre>
+      </div>
+
+      <div class="chord-card">
+        <div class="chord-name">Am</div>
+        <pre>A|--0--|
+E|--0--|
+C|--0--|
+G|--2--|</pre>
+      </div>
+
+      <div class="chord-card">
+        <div class="chord-name">B</div>
+        <pre>A|--2--|
+E|--4--|
+C|--4--|
+G|--4--|</pre>
+      </div>
+
+      <div class="chord-card">
+        <div class="chord-name">E7</div>
+        <pre>A|--2--|
+E|--0--|
+C|--2--|
+G|--1--|</pre>
+      </div>
+
+      <div class="chord-card">
+        <div class="chord-name">A</div>
+        <pre>A|--0--|
+E|--1--|
+C|--2--|
+G|--2--|</pre>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 楽譜 -->
+  <div class="score">
+    <h2>🎵 歌詞 &amp; コード進行</h2>
+
+    <!-- イントロ -->
+    <div class="section">
+      <span class="section-label">INTRO</span>
+      <div class="intro-line">G　D　G　G</div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- 1番Aメロ -->
+    <div class="section">
+      <span class="section-label">1番 Aメロ</span>
+      <div class="line">
+        <div class="lyric-block">
+          <span class="chord-above">G</span>
+          <span class="lyric-text">ひまわり畑に</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">D</span>
+          <span class="lyric-text">はじける笑顔</span>
+        </div>
+      </div>
+      <div class="line">
+        <div class="lyric-block">
+          <span class="chord-above">D7</span>
+          <span class="lyric-text">光る海</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">Am</span>
+          <span class="lyric-text">そよぐ風</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">D</span>
+          <span class="lyric-text">Am</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">G</span>
+          <span class="lyric-text">D</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">G</span>
+          <span class="lyric-text">素敵な南伊豆</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="line">
+        <div class="lyric-block">
+          <span class="chord-above">G</span>
+          <span class="lyric-text">ことりはさえずり</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">D</span>
+          <span class="lyric-text">にゃんこも恋する</span>
+        </div>
+      </div>
+      <div class="line">
+        <div class="lyric-block">
+          <span class="chord-above">D7</span>
+          <span class="lyric-text">一緒に</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">Am</span>
+          <span class="lyric-text">歩こう</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">D Am</span>
+          <span class="lyric-text">&nbsp;</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">G</span>
+          <span class="lyric-text">D</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">G</span>
+          <span class="lyric-text">素敵な南伊豆</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- サビ -->
+    <div class="section">
+      <span class="section-label">サビ</span>
+      <div class="line">
+        <div class="lyric-block">
+          <span class="chord-above">B</span>
+          <span class="lyric-text">シュノーケル</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">E7</span>
+          <span class="lyric-text">しようよ</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">B</span>
+          <span class="lyric-text">　</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">B</span>
+          <span class="lyric-text">秘密の</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">E7</span>
+          <span class="lyric-text">あの浜で</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">B</span>
+          <span class="lyric-text">　</span>
+        </div>
+      </div>
+      <div class="line">
+        <div class="lyric-block">
+          <span class="chord-above">D</span>
+          <span class="lyric-text">そうすりゃ</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">G</span>
+          <span class="lyric-text">魚たちと</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">D</span>
+          <span class="lyric-text">　</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">D</span>
+          <span class="lyric-text">おはなし</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">A</span>
+          <span class="lyric-text">できるから</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">D D7</span>
+          <span class="lyric-text">　</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- 2番Aメロ -->
+    <div class="section">
+      <span class="section-label">2番 Aメロ</span>
+      <div class="line">
+        <div class="lyric-block">
+          <span class="chord-above">G</span>
+          <span class="lyric-text">菜の花畑に</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">D</span>
+          <span class="lyric-text">ポカポカ温泉</span>
+        </div>
+      </div>
+      <div class="line">
+        <div class="lyric-block">
+          <span class="chord-above">D7</span>
+          <span class="lyric-text">2月にゃ</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">Am</span>
+          <span class="lyric-text">桜咲く</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">D Am</span>
+          <span class="lyric-text">&nbsp;</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">G</span>
+          <span class="lyric-text">D</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">G</span>
+          <span class="lyric-text">素敵な南伊豆</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="line">
+        <div class="lyric-block">
+          <span class="chord-above">B</span>
+          <span class="lyric-text">美味しい料理</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">E7</span>
+          <span class="lyric-text">作って</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">B</span>
+          <span class="lyric-text">　</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">B</span>
+          <span class="lyric-text">今夜は</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">E7</span>
+          <span class="lyric-text">パーティーさ</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">B</span>
+          <span class="lyric-text">　</span>
+        </div>
+      </div>
+      <div class="line">
+        <div class="lyric-block">
+          <span class="chord-above">D</span>
+          <span class="lyric-text">いつもの</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">G</span>
+          <span class="lyric-text">ゲストハウスで</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">D</span>
+          <span class="lyric-text">　</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">D</span>
+          <span class="lyric-text">ウクレレ</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">A</span>
+          <span class="lyric-text">弾きながら</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">D D7</span>
+          <span class="lyric-text">　</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- 3番Aメロ -->
+    <div class="section">
+      <span class="section-label">3番 Aメロ</span>
+      <div class="line">
+        <div class="lyric-block">
+          <span class="chord-above">G</span>
+          <span class="lyric-text">ここで過ごせば</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">D</span>
+          <span class="lyric-text">みんな幸せ</span>
+        </div>
+      </div>
+      <div class="line">
+        <div class="lyric-block">
+          <span class="chord-above">D7</span>
+          <span class="lyric-text">9月も</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">Am</span>
+          <span class="lyric-text">泳げる</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">D Am</span>
+          <span class="lyric-text">&nbsp;</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">G</span>
+          <span class="lyric-text">D</span>
+        </div>
+        <div class="lyric-block">
+          <span class="chord-above">G</span>
+          <span class="lyric-text">素敵な南伊豆</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- アウトロ -->
+    <div class="section">
+      <span class="section-label">OUTRO</span>
+      <div class="intro-line">G　D　G　G　D　G</div>
+      <div style="text-align:center; font-size:1.1rem; color:var(--sea); font-family:'Noto Serif JP',serif; margin-top:0.5rem;">
+        素敵な南伊豆 🌊
+      </div>
+    </div>
+
+  </div>
+
+  <div style="text-align:center; margin-top:1.5rem; font-size:0.75rem; color:#888; letter-spacing:0.1em;">
+    ウクレレ GCEA チューニング ／ Tab: 上から A・E・C・G 弦
+  </div>
+
+</div>
+</body>
+</html>
