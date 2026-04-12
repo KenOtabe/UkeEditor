@@ -282,17 +282,6 @@ body { font-family: var(--font-jp); background: var(--bg); color: var(--lyric-c)
 }
 .field-inp:focus { border-color: var(--accent); }
 
-/* Chord position grid */
-.pos-grid { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; max-height: 200px; overflow-y: auto; }
-.pos-chip {
-  background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 5px; padding: 4px 7px; cursor: pointer;
-  font-size: 0.78rem; text-align: center; min-width: 34px;
-}
-.pos-chip.sel { background: rgba(246,160,91,.2); border-color: var(--accent); color: var(--accent); }
-.pos-chip .pc-c { color: var(--lyric-c); font-size: 0.92rem; display: block; }
-.pos-chip .pc-i { font-size: 0.6rem; color: var(--muted); font-family: var(--font-mono); display: block; }
-
 /* ── CUSTOM DIALOG (confirm / alert) ── */
 .dialog-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.7);
@@ -438,23 +427,33 @@ body { font-family: var(--font-jp); background: var(--bg); color: var(--lyric-c)
   </div>
 </div>
 
-<!-- Add chord -->
-<div class="overlay hidden" id="addChordModal">
-  <div class="modal">
-    <div class="modal-hdr"><h2>🎸 コードを追加</h2><button class="btn btn-ghost btn-xs" onclick="closeModal('addChordModal')">✕</button></div>
-    <div class="modal-body">
-      <div class="field-row">
-        <div class="field-label">コード名</div>
-        <input class="field-inp" id="ac_name" placeholder="例: G, Am, D7" autocomplete="off" autocorrect="off" spellcheck="false">
+<!-- Chord bulk editor -->
+<div class="overlay hidden" id="chordBulkModal">
+  <div class="modal" style="width:min(560px,100%);max-height:90dvh;">
+    <div class="modal-hdr">
+      <h2>🎸 コードを編集</h2>
+      <button class="btn btn-ghost btn-xs" onclick="closeModal('chordBulkModal')">✕</button>
+    </div>
+    <div class="modal-body" style="overflow-y:auto;padding:12px 14px;">
+      <!-- 文字グリッド（位置選択） -->
+      <div class="field-label" style="margin-bottom:6px">① 文字を選択してコードを入力</div>
+      <div id="cbm_grid" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px;"></div>
+      <!-- 選択中の文字へのコード入力 -->
+      <div id="cbm_input_area" style="display:none;margin-bottom:14px;">
+        <div class="field-label" style="margin-bottom:4px">② コード名を入力（空欄で削除）</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input class="field-inp" id="cbm_name" style="flex:1"
+            placeholder="例: G, Am, D7" autocomplete="off" autocorrect="off" spellcheck="false">
+          <button class="btn btn-accent btn-sm" onclick="cbmSetChord()">セット</button>
+        </div>
       </div>
-      <div class="field-row">
-        <div class="field-label">位置（コードを付ける文字をタップ）</div>
-        <div class="pos-grid" id="ac_grid"></div>
-      </div>
+      <!-- 現在のコード一覧 -->
+      <div class="field-label" style="margin-bottom:6px">③ 現在のコード一覧（タップで選択・編集）</div>
+      <div id="cbm_list" style="display:flex;flex-wrap:wrap;gap:6px;min-height:36px;"></div>
     </div>
     <div class="modal-ftr">
-      <button class="btn btn-ghost btn-sm" onclick="closeModal('addChordModal')">キャンセル</button>
-      <button class="btn btn-accent btn-sm" onclick="commitAddChord()">追加</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('chordBulkModal')">キャンセル</button>
+      <button class="btn btn-accent btn-sm" onclick="cbmSave()">保存</button>
     </div>
   </div>
 </div>
@@ -492,7 +491,6 @@ let curSong  = -1;
 let curSec   = 0;
 let checkedLines = new Set();
 let openPanel    = -1;
-let acTarget     = { li: -1, ci: -1 };
 let previewMode  = false;
 
 /* ══════════════════════════════════
@@ -647,9 +645,9 @@ function renderLineRow(line, li) {
           onblur="commitLyric(${li})"
         >${esc(line.chars.join(''))}</textarea>
         <div class="chord-area">
-          <div class="chord-area-label">コード（✕で削除 ／ ＋で追加）</div>
+          <div class="chord-area-label">コード一覧</div>
           ${chips || '<span style="font-size:.72rem;color:var(--muted)">コードなし</span>'}
-          <button class="chord-add-btn" onclick="openAddChord(${li})">＋ コードを追加</button>
+          <button class="chord-add-btn" onclick="openChordBulk(${li})">🎸 コードを追加・編集・削除</button>
         </div>
         <div class="line-edit-foot">
           <button class="btn btn-blue btn-xs" onclick="togglePanel(${li})">完了</button>
@@ -717,51 +715,123 @@ function refreshChips(li) {
       return `<div class="chord-chip">
         <span class="chord-chip-pos">${idx}:${esc(ch)}</span>
         <span class="chord-chip-name">${esc(name)}</span>
-        <button class="chord-chip-del" onclick="deleteChord(${li},'${idx}')">✕</button>
       </div>`;
     }).join('');
   area.innerHTML = `
-    <div class="chord-area-label">コード（✕で削除 ／ ＋で追加）</div>
+    <div class="chord-area-label">コード一覧</div>
     ${chips || '<span style="font-size:.72rem;color:var(--muted)">コードなし</span>'}
-    <button class="chord-add-btn" onclick="openAddChord(${li})">＋ コードを追加</button>`;
+    <button class="chord-add-btn" onclick="openChordBulk(${li})">🎸 コードを追加・編集・削除</button>`;
 }
 
 /* ══════════════════════════════════
-   CHORD
+   CHORD BULK EDITOR
 ══════════════════════════════════ */
-function deleteChord(li, idx) {
-  delete lines()[li].chords[String(idx)];
-  persist(); refreshChips(li); onLyricInput(li);
-}
+let cbmLI = -1;          // 編集中の行インデックス
+let cbmDraft = {};        // モーダル内の作業コピー { idx: name }
+let cbmSelCI = -1;        // 現在選択中の文字インデックス
 
-function openAddChord(li) {
-  acTarget = { li, ci: -1 };
+function openChordBulk(li) {
+  cbmLI = li;
   const line = lines()[li];
-  document.getElementById('ac_grid').innerHTML = line.chars.map((ch, ci) => `
-    <div class="pos-chip" id="pc-${ci}" onclick="selPos(${ci})">
-      <span class="pc-c">${ch===' '?'␣':esc(ch)}</span>
-      <span class="pc-i">${ci}</span>
-    </div>`).join('');
-  document.getElementById('ac_name').value = '';
-  openModal('addChordModal');
-  setTimeout(() => document.getElementById('ac_name').focus(), 60);
+  cbmDraft = { ...line.chords };  // 作業コピー
+  cbmSelCI = -1;
+  cbmRenderGrid(line);
+  cbmRenderList();
+  document.getElementById('cbm_input_area').style.display = 'none';
+  document.getElementById('cbm_name').value = '';
+  openModal('chordBulkModal');
 }
 
-function selPos(ci) {
-  acTarget.ci = ci;
-  document.querySelectorAll('.pos-chip').forEach(p => p.classList.remove('sel'));
-  document.getElementById(`pc-${ci}`)?.classList.add('sel');
+function cbmRenderGrid(line) {
+  const l = line || lines()[cbmLI];
+  document.getElementById('cbm_grid').innerHTML = l.chars.map((ch, ci) => {
+    const hasChord = cbmDraft[String(ci)];
+    const isSel    = ci === cbmSelCI;
+    const style = isSel
+      ? 'background:rgba(246,160,91,.3);border-color:var(--accent);color:var(--accent)'
+      : hasChord
+        ? 'background:rgba(246,160,91,.12);border-color:rgba(246,160,91,.4)'
+        : '';
+    return `<div onclick="cbmSelectChar(${ci})"
+      style="border:1px solid var(--border);border-radius:5px;padding:4px 7px;
+             cursor:pointer;text-align:center;min-width:32px;${style}">
+      <div style="font-size:0.92rem;color:var(--lyric-c)">${ch===' '?'␣':esc(ch)}</div>
+      <div style="font-size:0.6rem;color:var(--muted);font-family:var(--font-mono)">${ci}</div>
+      ${hasChord ? `<div style="font-family:var(--font-hand);font-size:0.8rem;color:var(--chord-c);line-height:1">${esc(cbmDraft[String(ci)])}</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
-function commitAddChord() {
-  const name = document.getElementById('ac_name').value.trim();
-  if (!name)          { showAlert('コード名を入力してください'); return; }
-  if (acTarget.ci<0) { showAlert('位置を選択してください'); return; }
-  lines()[acTarget.li].chords[String(acTarget.ci)] = name;
-  persist(); closeModal('addChordModal'); refreshChips(acTarget.li); onLyricInput(acTarget.li);
+function cbmSelectChar(ci) {
+  cbmSelCI = ci;
+  const existing = cbmDraft[String(ci)] || '';
+  document.getElementById('cbm_name').value = existing;
+  document.getElementById('cbm_input_area').style.display = 'block';
+  cbmRenderGrid();
+  cbmRenderList();
+  setTimeout(() => document.getElementById('cbm_name').focus(), 40);
 }
-document.getElementById('ac_name').addEventListener('keydown', e => {
-  if (e.key === 'Enter') { e.preventDefault(); commitAddChord(); }
+
+function cbmSetChord() {
+  if (cbmSelCI < 0) { showAlert('文字を選択してください'); return; }
+  const name = document.getElementById('cbm_name').value.trim();
+  if (name) {
+    cbmDraft[String(cbmSelCI)] = name;
+  } else {
+    delete cbmDraft[String(cbmSelCI)];
+  }
+  // 次の文字へ自動移動
+  const lineLen = lines()[cbmLI].chars.length;
+  cbmSelCI = cbmSelCI + 1 < lineLen ? cbmSelCI + 1 : -1;
+  document.getElementById('cbm_name').value = cbmSelCI >= 0 ? (cbmDraft[String(cbmSelCI)] || '') : '';
+  if (cbmSelCI < 0) document.getElementById('cbm_input_area').style.display = 'none';
+  cbmRenderGrid();
+  cbmRenderList();
+  if (cbmSelCI >= 0) setTimeout(() => document.getElementById('cbm_name').focus(), 40);
+}
+
+function cbmRenderList() {
+  const line = lines()[cbmLI];
+  const entries = Object.entries(cbmDraft).sort((a,b) => +a[0] - +b[0]);
+  document.getElementById('cbm_list').innerHTML = entries.length
+    ? entries.map(([idx, name]) => {
+        const ch = line.chars[+idx] ?? '?';
+        const isSel = +idx === cbmSelCI;
+        return `<div onclick="cbmSelectChar(${idx})"
+          style="display:flex;align-items:center;gap:5px;
+                 background:${isSel?'rgba(246,160,91,.25)':'rgba(246,160,91,.1)'};
+                 border:1px solid ${isSel?'var(--accent)':'rgba(246,160,91,.3)'};
+                 border-radius:6px;padding:4px 9px;cursor:pointer;">
+          <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--muted)">${idx}:${esc(ch)}</span>
+          <span style="font-family:var(--font-hand);font-size:1rem;font-weight:700;color:var(--chord-c)">${esc(name)}</span>
+          <button onclick="event.stopPropagation();cbmDelete('${idx}')"
+            style="background:none;border:none;color:var(--muted);cursor:pointer;
+                   font-size:0.75rem;padding:0 2px;line-height:1;margin-left:2px">✕</button>
+        </div>`;
+      }).join('')
+    : '<span style="font-size:.75rem;color:var(--muted)">コードなし</span>';
+}
+
+function cbmDelete(idx) {
+  delete cbmDraft[String(idx)];
+  if (cbmSelCI === +idx) {
+    cbmSelCI = -1;
+    document.getElementById('cbm_input_area').style.display = 'none';
+  }
+  cbmRenderGrid();
+  cbmRenderList();
+}
+
+function cbmSave() {
+  lines()[cbmLI].chords = { ...cbmDraft };
+  persist();
+  closeModal('chordBulkModal');
+  refreshChips(cbmLI);
+  onLyricInput(cbmLI);
+}
+
+document.getElementById('cbm_name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); cbmSetChord(); }
 });
 
 /* ══════════════════════════════════
